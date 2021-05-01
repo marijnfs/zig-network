@@ -398,9 +398,14 @@ pub const Socket = struct {
     /// Will read all available data from the TCP stream or
     /// a UDP packet.
     pub fn receive(self: Self, data: []u8) !usize {
-        const recvfrom_fn = if (is_windows) windows.recvfrom else std.os.recvfrom;
         const flags = if (is_windows or is_bsd) 0 else std.os.MSG_NOSIGNAL;
-        return try recvfrom_fn(self.internal, data, flags, null, null);
+        if (!std.io.is_async) {
+            const recvfrom_fn = if (is_windows) windows.recvfrom else std.os.recvfrom;
+            return try recvfrom_fn(self.internal, data, flags, null, null);
+        } else {
+            const loop = std.event.Loop.instance orelse return error.UnexpectedError;
+            return try loop.recvfrom(self.internal, data, flags, null, null);
+        }
     }
 
     const ReceiveFrom = struct { numberOfBytes: usize, sender: EndPoint };
