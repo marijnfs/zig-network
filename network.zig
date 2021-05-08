@@ -231,7 +231,7 @@ pub const EndPoint = struct {
         ipv6: std.os.sockaddr_in6,
     };
 
-    fn toSocketAddress(self: Self) SockAddr {
+    pub fn toSocketAddress(self: Self) SockAddr {
         var result: std.os.sockaddr align(8) = undefined;
         return switch (self.address) {
             .ipv4 => |addr| SockAddr{
